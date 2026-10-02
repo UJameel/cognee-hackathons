@@ -17,8 +17,8 @@ input="$(cat 2>/dev/null)"
 case "$input" in *'"stop_hook_active"'*[Tt]rue*) exit 0 ;; esac
 
 now="$(date +%s)"
-if [ ! -f "$STATE" ]; then                 # first turn after install: start the clock, say nothing
-  printf '%s\n' "$now" > "$STATE"; exit 0
+if [ ! -f "$STATE" ]; then                 # install.sh starts the clock; this is the fallback for a
+  printf '%s\n' "$now" > "$STATE"; exit 0  # hand-copied skill: start it now, say nothing
 fi
 last="$(cat "$STATE" 2>/dev/null || echo 0)"
 [ "$((now - last))" -ge "$INTERVAL" ] || exit 0

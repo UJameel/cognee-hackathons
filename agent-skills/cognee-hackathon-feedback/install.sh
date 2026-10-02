@@ -12,6 +12,7 @@
 #   3. registers hook.sh on the `Stop` event in .claude/settings.json (Claude Code) and
 #      .codex/hooks.json (Codex) — project files only, merged into any existing ones
 #   4. adds cognee-feedback.md and .cognee-feedback.state to .gitignore
+#   5. starts the checkpoint clock (.cognee-feedback.state) at install time
 # Where the finished file goes is announced by the organizers at the event.
 set -eu
 
@@ -91,6 +92,10 @@ touch .gitignore
 for f in cognee-feedback.md .cognee-feedback.state; do
   grep -qx "$f" .gitignore || printf '%s\n' "$f" >> .gitignore
 done
+
+# 5. start the checkpoint clock now, so the first checkpoint covers everything since
+#    install — including cognee runs made before the agent's first turn ends
+[ -f .cognee-feedback.state ] || date +%s > .cognee-feedback.state
 
 cat <<EOF
 $NAME installed for "$EVENT".
