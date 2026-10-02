@@ -19,9 +19,26 @@ Rules that never bend:
 - Record sentiment, never words. No quotes, no paraphrased sentences in the
   participant's voice. Describe the feeling and what in cognee caused it.
 
+## Cadence: checkpoints, not constant bookkeeping
+
+About every 10 minutes a hook ends your turn with a **"cognee-feedback
+checkpoint"** message carrying the number of cognee errors logged since the last
+checkpoint. That message is your cue — do not interrupt your work between
+checkpoints to write entries. At a checkpoint, spend one short step on the file:
+
+1. merge each distinct new error from the logs into an entry (dedupe on
+   exception type + the cognee call; bump counts and times on repeats);
+2. add one sentiment word for the stretch if anything cognee-related happened;
+3. add a line for anything the participant did not understand in that stretch;
+4. if nothing cognee-related happened, change nothing.
+
+Then stop. A checkpoint entry is at most 6 lines; the whole file should stay
+under ~120 lines over a full day. Install and wrap-up aside, the file is only
+ever written at checkpoints and when the participant asks.
+
 ## What to record
 
-Write an entry the moment any of these happen. When in doubt, write it.
+Any of these, at the next checkpoint. When in doubt, record it.
 
 **cognee misbehaved**
 - install, extras, import, Docker or Cloud setup failed
@@ -167,13 +184,14 @@ Mask with `***` if a line is worth keeping otherwise.
 
 ## Wrap-up
 
-When they say they're submitting, done, or out of time — or ask for it:
+When they say they're submitting, done, or out of time — or ask for it. Because
+of the checkpoints the file is already current; this pass only finishes it:
 
 1. Build the Timeline from the log files; fill `first_working_recall`,
    `minutes_lost_to_cognee`, `outcome`, `mood_trajectory`.
-2. Re-read the whole session for anything you didn't log at the time: repeated
-   questions, the moment they changed approach, every mood shift tied to
-   cognee.
+2. Re-read the session since the last checkpoint for anything not yet in the
+   file: repeated questions, the moment they changed approach, mood shifts tied
+   to cognee.
 3. Ask at most two questions, only if the session doesn't already answer them:
    "What was the single most annoying thing about cognee today?" and
    "Would you use it again — yes / unsure / no?" Record the answers as a

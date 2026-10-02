@@ -6,10 +6,12 @@
 #            | sh -s -- --event "Redis Hackathon"
 #
 # What it does (idempotent — safe to run twice):
-#   1. copies SKILL.md to .claude/skills/ and .agents/skills/
+#   1. copies SKILL.md and hook.sh to .claude/skills/ and .agents/skills/
 #   2. appends a "cognee feedback" block to AGENTS.md and CLAUDE.md (creates them if missing)
 #      carrying the event name
-#   3. adds cognee-feedback.md to .gitignore
+#   3. registers hook.sh on the `Stop` event in .claude/settings.json (Claude Code) and
+#      .codex/hooks.json (Codex) — project files only, merged into any existing ones
+#   4. adds cognee-feedback.md and .cognee-feedback.state to .gitignore
 # Where the finished file goes is announced by the organizers at the event.
 set -eu
 
@@ -30,11 +32,14 @@ done
 here="$(cd "$(dirname "$0")" 2>/dev/null && pwd || true)"
 for dir in .claude/skills .agents/skills; do
   mkdir -p "$dir/$NAME"
-  if [ -n "$here" ] && [ -f "$here/SKILL.md" ]; then
-    cp "$here/SKILL.md" "$dir/$NAME/SKILL.md"
-  else
-    curl -fsSL "$RAW_BASE/SKILL.md" -o "$dir/$NAME/SKILL.md"
-  fi
+  for f in SKILL.md hook.sh; do
+    if [ -n "$here" ] && [ -f "$here/$f" ]; then
+      cp "$here/$f" "$dir/$NAME/$f"
+    else
+      curl -fsSL "$RAW_BASE/$f" -o "$dir/$NAME/$f"
+    fi
+  done
+  chmod +x "$dir/$NAME/hook.sh"
 done
 
 # 2. the standing instruction — a skill only fires when the agent matches a request,
@@ -47,6 +52,8 @@ This project uses cognee at the \"$EVENT\" hackathon. Follow the
 
 - Whenever cognee errors, is slow, behaves unexpectedly, or I seem confused or
   annoyed about it, add an entry to \`./cognee-feedback.md\`.
+- About every 10 minutes a hook ends your turn with a \"cognee-feedback
+  checkpoint\" message: update the file as it says, briefly, then stop.
 - When I say I'm done, submitting, or out of time — or run
   \`/$NAME\` — run the skill's wrap-up.
 - The organizers announce where the finished file goes.
@@ -60,16 +67,39 @@ for f in AGENTS.md CLAUDE.md; do
   printf '%s\n' "$block" >> "$f"
 done
 
-# 3. keep the feedback file out of the (often public) submission repo
+# 3. the checkpoint hook — same handler for both agents, on the end-of-turn event.
+#    Project-scoped files only; merged into existing ones, never ~/.claude or ~/.codex.
+hook_claude="sh \"\${CLAUDE_PROJECT_DIR:-.}/.agents/skills/$NAME/hook.sh\""
+hook_codex="sh .agents/skills/$NAME/hook.sh"
+mkdir -p .claude .codex
+python3 - "$NAME" ".claude/settings.json" "$hook_claude" ".codex/hooks.json" "$hook_codex" <<'EOF'
+import json, pathlib, sys
+name, *pairs = sys.argv[1:]
+for path, command in zip(pairs[::2], pairs[1::2]):
+    p = pathlib.Path(path)
+    data = json.loads(p.read_text()) if p.exists() and p.read_text().strip() else {}
+    groups = data.setdefault("hooks", {}).setdefault("Stop", [])
+    if any(f"{name}/hook.sh" in h.get("command", "") for g in groups for h in g.get("hooks", [])):
+        continue
+    groups.append({"hooks": [{"type": "command", "command": command, "timeout": 10,
+                              "statusMessage": "cognee feedback checkpoint"}]})
+    p.write_text(json.dumps(data, indent=2) + "\n")
+EOF
+
+# 4. keep the feedback file and the hook's clock out of the (often public) submission repo
 touch .gitignore
-grep -qx "cognee-feedback.md" .gitignore || printf 'cognee-feedback.md\n' >> .gitignore
+for f in cognee-feedback.md .cognee-feedback.state; do
+  grep -qx "$f" .gitignore || printf '%s\n' "$f" >> .gitignore
+done
 
 cat <<EOF
 $NAME installed for "$EVENT".
   skill:        .claude/skills/$NAME/SKILL.md  (+ .agents/skills/)
   instruction:  AGENTS.md, CLAUDE.md  (section "cognee feedback (hackathon)")
-  ignored:      cognee-feedback.md
+  checkpoint:   .claude/settings.json + .codex/hooks.json → Stop → hook.sh, every ~10 min
+  ignored:      cognee-feedback.md, .cognee-feedback.state
 Participants: your agent now keeps a private record of how cognee behaves for
 you in ./cognee-feedback.md — no quotes, keys, data or names. The organizers
-will tell you where to hand it in.
+will tell you where to hand it in. (Codex asks you to trust this project once;
+say yes so the checkpoint runs.)
 EOF

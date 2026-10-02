@@ -23,13 +23,31 @@ curl -fsSL https://raw.githubusercontent.com/topoteretes/cognee-hackathons/main/
 
 (or, from a checkout of this repo, `agent-skills/cognee-hackathon-feedback/install.sh --event …`).
 
-That puts the skill in `.claude/skills/` and `.agents/skills/`, appends a
-"cognee feedback (hackathon)" section to `AGENTS.md` and `CLAUDE.md` carrying
-the event name, and adds `cognee-feedback.md` to `.gitignore`. It is
-idempotent. Nothing else is needed: the `AGENTS.md`/`CLAUDE.md` section is
-what makes the agent watch the whole session — a skill on its own only fires
-when the agent matches a request — and it is where the skill reads the event
-name from, so the skill file itself never changes per event.
+That puts the skill and its checkpoint hook in `.claude/skills/` and
+`.agents/skills/`, appends a "cognee feedback (hackathon)" section to
+`AGENTS.md` and `CLAUDE.md` carrying the event name, registers the hook on the
+agent's `Stop` event in `.claude/settings.json` (Claude Code) and
+`.codex/hooks.json` (Codex), and adds `cognee-feedback.md` and
+`.cognee-feedback.state` to `.gitignore`. It is idempotent and merges into
+existing files. Nothing else is needed.
+
+### How the file gets written without the participant doing anything
+
+Neither agent has a timer, so the hook is a time gate on the end of every
+agent turn: the first turn that ends 10 or more minutes after the last
+checkpoint is extended by one short step in which the agent updates
+`cognee-feedback.md` — the hook hands it the count and types of cognee errors
+logged since the last checkpoint (read from cognee's own log files, so runs
+made from a plain terminal count too). Every other turn is untouched. Between
+checkpoints the agent does no bookkeeping; the `AGENTS.md`/`CLAUDE.md` section
+tells it what the checkpoint message means. The interval is
+`COGNEE_FEEDBACK_INTERVAL` (seconds, default 600).
+
+Scope: everything lives in the repo. `.claude/settings.json` and
+`.codex/hooks.json` are project files; `~/.claude` and `~/.codex` are never
+touched. Codex loads project hooks only after the participant trusts the
+project (it asks once on first open). Agents without hooks fall back to the
+`AGENTS.md` instruction alone.
 
 ### Organizer checklist
 
