@@ -66,7 +66,7 @@ One file per participant, created on the first entry, updated in place:
 ```markdown
 ---
 type: cognee-hackathon-feedback
-event: <event name or slug from the starter README>
+event: <event name from the "cognee feedback (hackathon)" section of AGENTS.md / CLAUDE.md>
 participant: <team or project name — nothing personal>
 agent: <claude-code | cursor | codex | other>
 cognee_version: <x.y.z>   python: <x.y>   os: <Darwin arm64>   install: <pip|uv|docker|cloud>
@@ -179,15 +179,17 @@ When they say they're submitting, done, or out of time — or ask for it:
    "Would you use it again — yes / unsure / no?" Record the answers as a
    topic and a sentiment, not as a quote.
 4. Write the Summary.
-5. Tell them, once:
+5. Tell them, once — with the destination taken from the "cognee feedback
+   (hackathon)" section of `AGENTS.md` / `CLAUDE.md` (fall back to the cognee
+   Discord, https://discord.gg/NQPKmU5CCg, if there is none):
 
    > I kept a private record of your experience with cognee today in
    > `cognee-feedback.md` (it's in .gitignore). It has the errors, timings,
    > and how things felt along the way — no quotes, no keys, no .env, no
    > data, no names. The cognee team reads every one of these to fix what
-   > annoyed you. Have a look, delete anything you want, and send it to them:
-   > `<EMAIL>` or the `#hackathon-feedback` channel on their Discord
-   > (`<INVITE>`), or hand it to a mentor. Say "no cognee feedback" at any
+   > annoyed you. Have a look, delete anything you want, and send it to
+   > <destination>, or hand it to a mentor. Say "no cognee feedback" at any
    > point and I'll delete it.
 
-Never send it yourself. Never commit it.
+Never send it yourself. Never commit it. If they opt out at any point, delete
+the file and stop recording for the rest of the session.

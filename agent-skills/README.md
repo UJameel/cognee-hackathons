@@ -1,51 +1,53 @@
 # Agent skills
 
-Skills for the participant's **coding agent** (Claude Code, Codex, Cursor, …),
-as opposed to the cognee procedural skills some events ingest with
-`cognee.remember(..., content_type="skills")`. Each lives in its own folder as
-`<name>/SKILL.md` and is event-independent — copy it into the starter
-material of any hackathon.
+Skills for the participant's **coding agent** (Claude Code, Codex, Cursor, …) —
+not the cognee procedural skills some events ingest with
+`cognee.remember(..., content_type="skills")`. Each is a self-contained folder
+that works at any event.
 
 ## cognee-hackathon-feedback
 
-Keeps a private record of the participant's experience with cognee during the
-event — errors, slow steps, confusion, workarounds, and how frustrating each
-one was — in `./cognee-feedback.md`, and tells the participant at wrap-up how
-to send it to the cognee team. It records sentiment, never quotes; no keys,
-`.env`, data, or names ever go in the file. The agent never sends or commits it.
+The participant's agent keeps a private record of how cognee behaved for them
+during the event — errors, slow steps, confusion, workarounds, and how
+frustrating each one was — in `./cognee-feedback.md`, and at wrap-up tells them
+where to send it. It records sentiment, never quotes; no keys, `.env`, data, or
+names ever go in the file, and the agent never sends or commits it. Saying
+"no cognee feedback" to the agent deletes it.
 
-### Add it to a starter repo
+### Install — one command, in the starter repo or the participant's own
 
 ```bash
-mkdir -p .claude/skills
-cp -r agent-skills/cognee-hackathon-feedback .claude/skills/
-echo "cognee-feedback.md" >> .gitignore
+curl -fsSL https://raw.githubusercontent.com/topoteretes/cognee-hackathons/main/agent-skills/cognee-hackathon-feedback/install.sh \
+  | sh -s -- --event "Redis Hackathon 2026-05-16" --contact "hackathon@cognee.ai"
 ```
 
-Agents that read the Agent Skills layout instead of `.claude/skills/` take the
-same folder under `.agents/skills/`.
+(or, from a checkout of this repo, `agent-skills/cognee-hackathon-feedback/install.sh --event … --contact …`).
 
-A skill only runs when the agent decides it applies, and "watch the whole
-session" is not a request it will match on its own — so also add this standing
-instruction to the project's `CLAUDE.md` / `AGENTS.md`, which agents load every
-turn:
+That puts the skill in `.claude/skills/` and `.agents/skills/`, appends a
+"cognee feedback (hackathon)" section to `AGENTS.md` and `CLAUDE.md` carrying
+the event name and the contact, and adds `cognee-feedback.md` to `.gitignore`.
+It is idempotent. Nothing else is needed: the `AGENTS.md`/`CLAUDE.md` section
+is what makes the agent watch the whole session — a skill on its own only
+fires when the agent matches a request — and it is where the skill reads the
+event name and destination from, so the skill file itself never changes
+per event.
 
-```markdown
-## cognee feedback (hackathon)
-This project uses cognee. Whenever cognee errors, is slow, behaves unexpectedly,
-or I seem confused or annoyed about it, follow the `cognee-hackathon-feedback`
-skill and update ./cognee-feedback.md. When I say I'm done or submitting, run
-the skill's wrap-up. Never commit or send that file.
-```
+`--contact` is where participants send the file: an email, a Discord channel,
+or an upload field on the submission form (recommended — they are already
+there). Without it the cognee Discord is used.
 
-Participants can also run the wrap-up explicitly with
-`/cognee-hackathon-feedback` — announce that before the submission deadline.
+### Organizer checklist
 
-### Before the event
-
-- Fill the two placeholders in the skill's wrap-up message (`<EMAIL>` and the
-  Discord `<INVITE>`), or point them at an upload field on the submission form.
-- Dry-run it once: break the install on purpose, act confused, say "I'm done",
-  and read the file it produces.
-- One line in the event README telling participants the file exists, what it
-  contains, and that saying "no cognee feedback" deletes it.
+- Run the installer in the event's starter template and commit the result, so
+  participants who clone it get everything. Put the one-liner in the event
+  README for teams bringing their own repo.
+- Add one line to the event README: *"Your agent keeps a private record of how
+  cognee behaved for you in `cognee-feedback.md` — no quotes, keys, data, or
+  names. Send it in with your submission; say 'no cognee feedback' to opt out."*
+- Dry-run once before the event: break the install on purpose, act confused,
+  say "I'm done", and read the file it produces.
+- Before the submission deadline, announce: *"run `/cognee-hackathon-feedback`
+  now, then send the file"*.
+- After the event, drop the collected files in one folder and
+  `cognee.remember("./feedback", dataset_name="hackathon-<event>")` — the YAML
+  header fields (stage, sentiment, minutes lost, outcome) are then queryable.
