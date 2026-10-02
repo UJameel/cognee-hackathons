@@ -5,8 +5,9 @@
 #
 # Neither agent has a timer event, so "every 10 minutes" is a time gate on turns: the
 # first turn that ends ≥ INTERVAL seconds after the last checkpoint asks the agent to
-# update ./cognee-feedback.md, with a count of cognee errors logged since then. Every
-# other turn exits silently. Runs in well under 100 ms; never fails the turn.
+# update ./cognee-feedback.md, with a count of cognee errors logged since then (zero
+# runs is still a checkpoint — sentiment about cognee does not need a process to have
+# run). Every other turn exits silently. Runs in well under 100 ms; never fails the turn.
 INTERVAL="${COGNEE_FEEDBACK_INTERVAL:-600}"
 STATE="${COGNEE_FEEDBACK_STATE:-.cognee-feedback.state}"
 REPORT="cognee-feedback.md"
@@ -34,19 +35,20 @@ if [ -d "$LOGS" ]; then
     types="$(cat $new | grep -o 'exception_type=[A-Za-z_.]*' | cut -d= -f2 | sort | uniq -c | sort -rn | head -5 | awk '{printf "%s x%s, ", $2, $1}' | sed 's/, $//')"
   fi
 fi
-# Quiet stretch (no cognee run at all): nothing to distill, leave the turn alone and keep
-# the clock where it is, so the first turn after the next run checkpoints right away.
-[ "$runs" -gt 0 ] || exit 0
+# The checkpoint fires on time whether or not cognee ran: how the participant felt about
+# cognee in this stretch is worth recording even when nothing was executed.
 printf '%s\n' "$now" > "$STATE"
 
 since="$(date -r "$last" +%H:%M 2>/dev/null || date -d "@$last" +%H:%M 2>/dev/null || echo "the last checkpoint")"
 if [ -f "$REPORT" ]; then verb="Update"; else verb="Create"; fi
 if [ "$errors" -gt 0 ]; then
   evidence="cognee logged $errors error line(s) across $runs run(s) since $since (${types})."
-else
+elif [ "$runs" -gt 0 ]; then
   evidence="cognee logged no errors since $since ($runs run(s))."
+else
+  evidence="no cognee run since $since."
 fi
-msg="cognee-feedback checkpoint (every ~10 min). $evidence $verb ./$REPORT following the cognee-hackathon-feedback skill: merge each distinct error into an entry (dedupe on exception type + cognee call, bump counts), add one sentiment word for this stretch if anything cognee-related happened, note anything the user did not understand. Keep it short; nothing if nothing happened. Then stop."
+msg="cognee-feedback checkpoint (every ~10 min). $evidence $verb ./$REPORT following the cognee-hackathon-feedback skill: merge each distinct error into an entry (dedupe on exception type + cognee call, bump counts); add one sentiment word for this stretch if cognee came up at all — in conversation, docs, or waiting — even without a run; note anything the user did not understand. Keep it short; if cognee did not come up, change nothing. Then stop."
 
 # Keep the agent working for one short continuation; the reason reaches it as context.
 printf '{"decision":"block","reason":"%s"}\n' "$(printf '%s' "$msg" | sed 's/["\\]/\\&/g')"

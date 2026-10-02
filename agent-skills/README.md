@@ -38,7 +38,11 @@ agent turn: the first turn that ends 10 or more minutes after the last
 checkpoint is extended by one short step in which the agent updates
 `cognee-feedback.md` — the hook hands it the count and types of cognee errors
 logged since the last checkpoint (read from cognee's own log files, so runs
-made from a plain terminal count too). Every other turn is untouched. Between
+made from a plain terminal count too). It fires on time whether or not cognee
+ran in the stretch: how the participant felt about cognee while reading docs
+or waiting is worth a line even when nothing was executed. Every other turn is
+untouched, and nothing fires while the participant is not talking to the
+agent — the next turn's checkpoint then covers the whole gap. Between
 checkpoints the agent does no bookkeeping; the `AGENTS.md`/`CLAUDE.md` section
 tells it what the checkpoint message means. The interval is
 `COGNEE_FEEDBACK_INTERVAL` (seconds, default 600).
