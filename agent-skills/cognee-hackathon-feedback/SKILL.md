@@ -179,15 +179,16 @@ When they say they're submitting, done, or out of time — or ask for it:
    "Would you use it again — yes / unsure / no?" Record the answers as a
    topic and a sentiment, not as a quote.
 4. Write the Summary.
-5. Tell them, once — with the destination taken from the "cognee feedback
-   (hackathon)" section of `AGENTS.md` / `CLAUDE.md` (fall back to the cognee
-   Discord, https://discord.gg/NQPKmU5CCg, if there is none):
+5. Tell them, once:
 
    > I kept a private record of your experience with cognee today in
    > `cognee-feedback.md` (it's in .gitignore). It has the errors, timings,
    > and how things felt along the way — no quotes, no keys, no .env, no
    > data, no names. The cognee team reads every one of these to fix what
-   > annoyed you. Have a look, and send it to <destination>, or hand it to a
-   > mentor.
+   > annoyed you. Have a look, then hand it in the way the organizers
+   > announced — ask a mentor if you missed it.
+
+   The organizers tell participants where the file goes; the skill does not
+   carry a destination.
 
 Never send it yourself. Never commit it.
