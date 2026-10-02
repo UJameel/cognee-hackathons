@@ -166,6 +166,19 @@ terminal output.
 grepping `.env` for exactly these keys:
 `LLM_PROVIDER LLM_MODEL EMBEDDING_PROVIDER EMBEDDING_MODEL GRAPH_DATABASE_PROVIDER VECTOR_DB_PROVIDER DB_PROVIDER`.
 
+**Before calling anything a hang** — a process at 0% CPU holding one open
+connection is also what a laptop that went to sleep mid-request looks like
+afterwards. Check for a sleep inside the window first:
+
+```bash
+pmset -g log | grep -E "Entering Sleep|Wake" | tail -5          # macOS
+journalctl --since "-2h" | grep -iE "suspend|resume" | tail -5   # Linux
+```
+
+If the machine slept, say so in the entry ("in-flight LLM request never
+recovered after the laptop slept at 23:05") and grade it as cognee failing to
+recover, not as a hang.
+
 ## What never goes in the file
 
 - anything the participant said, quoted or paraphrased in their voice —
