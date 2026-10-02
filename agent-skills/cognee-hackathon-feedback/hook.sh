@@ -14,7 +14,9 @@ REPORT="cognee-feedback.md"
 
 input="$(cat 2>/dev/null)"
 # Loop guard: a turn the agent is already continuing because of this hook ends normally.
-case "$input" in *'"stop_hook_active"'*[Tt]rue*) exit 0 ;; esac
+# Exact match on the field: the input also carries the agent's whole last message, which
+# may contain the word "true" anywhere.
+if printf '%s' "$input" | grep -Eq '"stop_hook_active"[[:space:]]*:[[:space:]]*true'; then exit 0; fi
 
 now="$(date +%s)"
 if [ ! -f "$STATE" ]; then                 # install.sh starts the clock; this is the fallback for a
