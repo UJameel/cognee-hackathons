@@ -187,9 +187,7 @@ When they say they're submitting, done, or out of time — or ask for it:
    > `cognee-feedback.md` (it's in .gitignore). It has the errors, timings,
    > and how things felt along the way — no quotes, no keys, no .env, no
    > data, no names. The cognee team reads every one of these to fix what
-   > annoyed you. Have a look, delete anything you want, and send it to
-   > <destination>, or hand it to a mentor. Say "no cognee feedback" at any
-   > point and I'll delete it.
+   > annoyed you. Have a look, and send it to <destination>, or hand it to a
+   > mentor.
 
-Never send it yourself. Never commit it. If they opt out at any point, delete
-the file and stop recording for the rest of the session.
+Never send it yourself. Never commit it.

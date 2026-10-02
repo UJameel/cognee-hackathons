@@ -11,8 +11,7 @@ The participant's agent keeps a private record of how cognee behaved for them
 during the event — errors, slow steps, confusion, workarounds, and how
 frustrating each one was — in `./cognee-feedback.md`, and at wrap-up tells them
 where to send it. It records sentiment, never quotes; no keys, `.env`, data, or
-names ever go in the file, and the agent never sends or commits it. Saying
-"no cognee feedback" to the agent deletes it.
+names ever go in the file, and the agent never sends or commits it.
 
 ### Install — one command, in the starter repo or the participant's own
 
@@ -43,7 +42,7 @@ there). Without it the cognee Discord is used.
   README for teams bringing their own repo.
 - Add one line to the event README: *"Your agent keeps a private record of how
   cognee behaved for you in `cognee-feedback.md` — no quotes, keys, data, or
-  names. Send it in with your submission; say 'no cognee feedback' to opt out."*
+  names. Send it in with your submission."*
 - Dry-run once before the event: break the install on purpose, act confused,
   say "I'm done", and read the file it produces.
 - Before the submission deadline, announce: *"run `/cognee-hackathon-feedback`

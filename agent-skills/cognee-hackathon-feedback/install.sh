@@ -52,8 +52,7 @@ This project uses cognee at the \"$EVENT\" hackathon. Follow the
 - When I say I'm done, submitting, or out of time — or run
   \`/$NAME\` — run the skill's wrap-up.
 - The finished file goes to: $CONTACT
-- Never commit or send that file yourself. If I say \"no cognee feedback\",
-  delete it and stop.
+- Never commit or send that file yourself.
 <!-- /$NAME -->"
 for f in AGENTS.md CLAUDE.md; do
   if [ -f "$f" ] && grep -q "<!-- $NAME -->" "$f"; then
@@ -74,6 +73,6 @@ $NAME installed for "$EVENT".
   ignored:      cognee-feedback.md
   send file to: $CONTACT
 Participants: your agent now keeps a private record of how cognee behaves for
-you in ./cognee-feedback.md — no quotes, keys, data or names. Say
-"no cognee feedback" to your agent to opt out.
+you in ./cognee-feedback.md — no quotes, keys, data or names. Send it in with
+your submission.
 EOF
