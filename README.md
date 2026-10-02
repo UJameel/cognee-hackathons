@@ -49,6 +49,15 @@ Those folders preserve their original project structure (source code,
 3. Follow the quickstart to get Cognee (and any partner tools) running.
 4. Build, demo, and submit using the template in `templates/`.
 
+## Agent skills
+
+[`agent-skills/`](./agent-skills) holds skills for the participant's coding
+agent that work at any event. `cognee-hackathon-feedback` keeps a private
+record of how cognee behaved for a participant — errors, slow steps,
+confusion, and how frustrating each was — for them to send to the cognee
+team after the event. See [`agent-skills/README.md`](./agent-skills/README.md)
+for how to add it to a starter repo.
+
 ## Links
 
 - [Cognee on GitHub](https://github.com/topoteretes/cognee)
