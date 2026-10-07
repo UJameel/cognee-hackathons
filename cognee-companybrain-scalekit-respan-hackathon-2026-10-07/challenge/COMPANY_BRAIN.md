@@ -10,11 +10,15 @@ are authorized to see.
 Three layers, three partners:
 
 - **Scalekit** is the access layer — per-user OAuth connections to the
-  company's apps, and the tools your agent calls on each user's behalf.
+  company's apps, and the tools your agent calls on each user's behalf. That
+  includes code: the GitHub connector pulls repositories, files, issues and
+  PRs into the brain and pushes branches, commits and pull requests back out.
 - **Cognee** is the memory layer — one knowledge graph built from everything
   pulled, scoped per user / team, queried by the agents.
-- **Respan** is the evaluation layer — traces of the agents' runs, and
-  evaluators over a scenario set that prove the brain does the job.
+- **Respan** is the LLM gateway and evaluation layer — it provides the
+  event's LLM credits on its gateway (one key, 1,000+ models), logs every
+  call, traces the agents' runs, and scores them with evaluators over a
+  scenario set.
 
 ## Required Loop
 
@@ -56,9 +60,10 @@ difference closes. Show it live.
 - a before score and an after score, and one sentence on what changed.
 
 **Taking action** (posting the brief to Slack, drafting the email, opening the
-issue) is encouraged and scored under brain quality — but every write must go
-through Scalekit with the acting user's identifier, never with a shared bot
-token.
+issue, pushing a commit and opening a PR) is encouraged and scored under brain
+quality — but every write must go through Scalekit with the acting user's
+identifier, never with a shared bot token. A PR the agent pushes lands under
+the authorizing user's GitHub account, which is the point.
 
 ## Scenario Format
 
@@ -145,8 +150,11 @@ Total: 100 points.
 
 - never print or commit tokens; Scalekit holds them — keep it that way
 - read-only scopes unless the agent genuinely needs to write
-- no destructive actions (delete, archive, send to external addresses)
-  without a human confirmation step in the agent
+- no destructive actions (delete, archive, force-push, send to external
+  addresses) without a human confirmation step in the agent; code changes go
+  to a branch + PR, never straight to `main`
+- route LLM calls through the Respan gateway so spend is visible per team;
+  don't paste provider keys into the repo
 - a `forget()` path for a user's data is a plus
 
 ## Suggested Team Split

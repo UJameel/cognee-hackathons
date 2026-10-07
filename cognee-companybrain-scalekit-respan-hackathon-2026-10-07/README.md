@@ -14,9 +14,9 @@ In this hackathon you build a **Company Brain** out of three layers:
 
 | Layer | Tool | What it does |
 |-------|------|--------------|
-| **Access** | [Scalekit](https://docs.scalekit.com/agentkit/overview/) | Pulls data from each user's Google Drive, Slack, Gmail, GitHub, Notion, … through managed OAuth. Your code never touches a token. |
+| **Access** | [Scalekit](https://docs.scalekit.com/agentkit/overview/) | Pulls data from each user's Google Drive, Slack, Gmail, Notion, … through managed OAuth — and **pulls and pushes code** on GitHub (read files and PRs, create branches, commits and pull requests). Your code never touches a token. |
 | **Memory** | [Cognee](https://github.com/topoteretes/cognee) | Turns what Scalekit pulls into one knowledge graph the agent can `remember` into and `recall` from, per user, per dataset. |
-| **Evals** | [Respan](https://www.respan.ai/) | Traces your agents' runs and scores them with evaluators, so you can show the brain actually does the job — before and after a change. |
+| **LLM gateway + Evals** | [Respan](https://www.respan.ai/) | **Provides LLM credits on its gateway for the event** — one OpenAI-compatible endpoint for 1,000+ models — and traces and scores your agents' runs, so you can show the brain does the job before and after a change. |
 
 The goal: build something that makes us think
 *"this is what it would look like if a company had a brain."*
@@ -28,7 +28,9 @@ A Company Brain for a team workflow, wired end to end:
 1. **Pull with Scalekit** — connect **at least two** systems of record
    (Drive + Slack, GitHub + Notion, Gmail + HubSpot, …) through Scalekit
    AgentKit connectors. Each user authorizes once; your agent pulls on their
-   behalf using their `identifier`.
+   behalf using their `identifier`. Code counts as a source: the GitHub
+   connector pulls repositories, files, issues and PRs — and pushes back
+   (branches, commits, pull requests) when the agent has something to ship.
 2. **Remember with Cognee** — send what you pulled into Cognee with
    `cognee.remember(...)`, tagged by source and scoped to the user who is
    allowed to see it. Cognee extracts entities and relationships into one
@@ -39,7 +41,8 @@ A Company Brain for a team workflow, wired end to end:
    brief, an expert finder, a ticket triager, an onboarding guide, a "who
    decided this and why" assistant. Agents `recall` from Cognee and, when
    they need to act, write back through Scalekit (post to Slack, draft an
-   email, open an issue).
+   email, open an issue, push a commit and open a PR). Route the agents'
+   LLM calls through the Respan gateway — the event credits live there.
 4. **Evaluate with Respan** — trace the agent runs and score them against a
    scenario set with Respan evaluators. Change the brain or the agent, re-run,
    and show the **before/after** scores.
@@ -52,15 +55,15 @@ apps, with more than one person and more than one permission level.
 
 ```text
    Google Drive   Slack   Gmail   GitHub   Notion   HubSpot   ...
-        │          │        │        │        │        │
-        └──────────┴────────┴───┬────┴────────┴────────┘
+        │          │        │       ▲│       │        │
+        └──────────┴────────┴───┬───┘┴───────┴────────┘
                                 │  OAuth per user, tokens stored + refreshed
-                                ▼
+                                ▼  (GitHub: pull code + PRs in, push commits + PRs out)
                   ┌───────────────────────────────┐
                   │  Scalekit AgentKit             │   ACCESS
                   │  execute_tool(identifier=...)  │   who may read / act on what
                   └──────────────┬────────────────┘
-                                 │  documents, threads, issues, emails
+                                 │  documents, threads, issues, emails, code
                                  ▼
                   ┌───────────────────────────────┐
                   │  Cognee                        │   MEMORY
@@ -73,9 +76,10 @@ apps, with more than one person and more than one permission level.
                                  ▼
                   ┌───────────────────────────────┐
                   │  Your agent(s)                 │   TASKS
-                  │  brief · triage · find-expert  │   act via Scalekit:
-                  │  …traced + scored by Respan    │   post, draft, open issue
-                  └──────────────┬────────────────┘
+                  │  brief · triage · find-expert  │   LLM calls via the Respan
+                  │  LLM → Respan gateway          │   gateway (event credits);
+                  │  …traced + scored by Respan    │   act via Scalekit: post,
+                  └──────────────┬────────────────┘   draft, open issue, push PR
                                  ▼
                            [ your team ]
 ```
@@ -119,17 +123,20 @@ All times **Pacific Time (PT)**. Final timings are confirmed at kickoff.
 
 ## Setup
 
-> **Bring a laptop and a GitHub account.** We hand out an LLM API key
-> (OpenAI) at kickoff. Scalekit has a free tier that is enough for the event;
-> creating that account ahead of time saves you ten minutes, but is not
-> required.
+> **Bring a laptop and a GitHub account.** LLM access is **provided at
+> kickoff as Respan gateway credits**: one `RESPAN_API_KEY` that reaches
+> OpenAI, Anthropic, Gemini and 1,000+ other models through a single
+> OpenAI-compatible endpoint. Scalekit has a free tier that is enough for the
+> event; creating that account ahead of time saves you ten minutes, but is
+> not required.
 
 ### Prerequisites
 
 - Python 3.10 – 3.14
 - `uv` (`curl -LsSf https://astral.sh/uv/install.sh | sh`)
 - A Scalekit account — free tier is enough: <https://app.scalekit.com>
-- An LLM API key — **provided by us at kickoff** (or bring your own from any
+- A Respan API key with event credits — **provided by us at kickoff** (or
+  bring your own LLM key from any
   [supported provider](https://docs.cognee.ai/setup-configuration/llm-providers))
 
 ### 1. Install
@@ -139,14 +146,46 @@ uv venv && source .venv/bin/activate
 uv pip install "cognee>=1.6.3" scalekit-sdk-python python-dotenv
 ```
 
-### 2. Configure the LLM
+### 2. Configure the LLM — Respan gateway credits
+
+Respan is providing LLM credits on its gateway for the event. The gateway is
+OpenAI-compatible, so Cognee's `custom` provider talks to it directly — point
+Cognee at `https://api.respan.ai/api` with your Respan key and pick any model
+slug:
 
 ```bash
-export LLM_API_KEY="<key-we-give-you-at-the-event>"
+export LLM_PROVIDER="custom"
+export LLM_ENDPOINT="https://api.respan.ai/api"
+export LLM_API_KEY="<respan-key-we-give-you-at-the-event>"
+export LLM_MODEL="openai/gpt-5-mini"          # any slug the gateway routes; swap freely
+
+# Embeddings through the same gateway and key
+export EMBEDDING_PROVIDER="custom"
+export EMBEDDING_ENDPOINT="https://api.respan.ai/api"
+export EMBEDDING_API_KEY="<same-respan-key>"
+export EMBEDDING_MODEL="openai/text-embedding-3-large"
+export EMBEDDING_DIMENSIONS=3072
 ```
 
-Or copy [`.env.example`](./.env.example) to `.env` and fill it in. Cognee
-reads `.env` from the working directory. Prefer another provider? Set
+Your own agent code uses the same two values with any OpenAI SDK:
+
+```python
+from openai import OpenAI
+
+llm = OpenAI(base_url="https://api.respan.ai/api", api_key=os.environ["RESPAN_API_KEY"])
+llm.chat.completions.create(model="gpt-5-mini", messages=[...])
+```
+
+Every call through the gateway is logged in Respan with model, tokens, cost
+and latency — which is also the trace your evals score against (step 6).
+Keep the `openai/` prefix on the slugs: it tells Cognee's LiteLLM layer to
+speak the OpenAI-compatible format to `LLM_ENDPOINT`. `EMBEDDING_DIMENSIONS`
+must match the embedding model you pick (3072 for `text-embedding-3-large`,
+1536 for `-small`). If an embedding slug is not routed by the gateway, point
+only the `EMBEDDING_*` vars at a direct provider key and keep the LLM on
+Respan.
+Or copy [`.env.example`](./.env.example) to `.env` and fill it in; Cognee
+reads `.env` from the working directory. Prefer your own key? Set
 `LLM_PROVIDER` / `LLM_MODEL` per the
 [provider docs](https://docs.cognee.ai/setup-configuration/llm-providers).
 
@@ -211,10 +250,23 @@ Useful read tools to start from:
 | Google Drive | `googledrive_search_files` / `googledrive_list_folder_contents` | file ids + metadata |
 | Google Drive | `googledrive_export_file` | a Doc/Sheet/Slide exported to a MIME type (`text/plain`, `text/csv`) |
 | Gmail | `gmail_fetch_mails` | messages matching a Gmail `query` |
+| GitHub | `github_file_contents_get` / `github_git_tree_get` | a file (base64) or a whole tree — pull code into the brain |
+| GitHub | `github_pull_requests_list` / `github_pull_request_files_list` / `github_issues_list` | PRs, their diffs, and issues |
+
+**Scalekit pushes code too.** The GitHub connector has 217 tools, 76 of them
+writes, so an agent that has something to ship does it as the user:
+`github_branch_create` → `github_file_create_update` (one or more files) →
+`github_pull_request_create`, or the lower-level `github_git_blob_create` /
+`github_git_tree_create` / `github_git_commit_create` / `github_git_ref_update`
+for a multi-file commit. The PR lands under the authorizing user's account,
+not a bot's. Pair it with Cognee's code graph: `remember("https://github.com/org/repo")`
+builds the symbol/import graph, the agent reasons over it, then pushes the
+change back through Scalekit.
 
 Every connector page lists its tools and their inputs:
 [Slack](https://docs.scalekit.com/agentkit/connectors/slack) ·
 [Google Drive](https://docs.scalekit.com/agentkit/connectors/googledrive/) ·
+[GitHub](https://docs.scalekit.com/agentkit/connectors/github) ·
 [all connectors](https://docs.scalekit.com/agentkit/connectors/).
 `actions.list_tools(connection_name="slack")` returns the same schemas from
 code — handy for handing them straight to an LLM as tool definitions.
@@ -340,16 +392,20 @@ vector store (default Ladybug + LanceDB). A full worked example — two users,
 isolation, then a grant — is in the previous hackathon's
 [`multiuser.py`](../cognee-gtm-brain-hackathon-2026-06-26/src/gtm_brain/multiuser.py).
 
-### 6. Respan — trace and evaluate the agents
+### 6. Respan — gateway credits, traces, evals
 
-Respan traces every LLM call, tool run and retrieval in an agent run as one
+Respan is providing **LLM credits on its gateway** for the event (step 2):
+every call your agents and Cognee make through `https://api.respan.ai/api`
+runs on those credits and is logged with model, tokens, cost and latency. The
+same platform traces an agent run (LLM calls, tool runs, retrievals) as one
 span tree, and scores runs with evaluators (LLM judge, deterministic Python
 check, or human review) over a testset. Instrument with the `respan-ai`
 Python SDK (`Respan()` once at startup, a decorator on the function that
 handles a request), build a testset from your scenario questions, and run the
 same evaluator before and after you change the brain.
 
-The Respan team walks through setup and hands out access at kickoff. Docs:
+The Respan team walks through setup and hands out keys at kickoff. Docs:
+[gateway](https://www.respan.ai/ai-gateway) ·
 [tracing](https://www.respan.ai/ai-tracing) ·
 [evals](https://www.respan.ai/ai-evals) ·
 [SDK on GitHub](https://github.com/respanai/respan).
@@ -401,6 +457,11 @@ or hand the link to an organizer before the deadline.
 - **Support triage** — Gmail + HubSpot + GitHub: route an incoming customer
   email to the right owner with the account's history attached. Eval: correct
   owner, correct linked issue.
+- **Docs that fix themselves** — pull the repo and the Slack `#support`
+  channel; when the brain sees the same question answered three times in
+  Slack and nowhere in the docs, the agent drafts the doc change and pushes
+  it as a PR through Scalekit under the answerer's account. Eval: PR touches
+  the right file, cites the thread.
 
 ## Resources
 
@@ -412,7 +473,8 @@ or hand the link to an organizer before the deadline.
   [repo](https://github.com/topoteretes/cognee) ·
   [company brain cookbooks](https://github.com/topoteretes/cognee/tree/main/examples/cookbooks/company_brain) ·
   [Discord](https://discord.gg/NQPKmU5CCg)
-- Respan: [tracing](https://www.respan.ai/ai-tracing) ·
+- Respan: [gateway](https://www.respan.ai/ai-gateway) ·
+  [tracing](https://www.respan.ai/ai-tracing) ·
   [evals](https://www.respan.ai/ai-evals) ·
   [SDK](https://github.com/respanai/respan)
 - Previous company-brain hackathons in this repo:

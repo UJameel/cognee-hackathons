@@ -22,9 +22,10 @@ workflow it solves, and who the users are.
 
 - Connections created (`connection_name` → app):
 - Tools called (`gmail_fetch_mails`, `slack_fetch_conversation_history`,
-  `googledrive_export_file`, ...):
+  `googledrive_export_file`, `github_file_contents_get`, ...):
 - How users are identified (`identifier` ↔ Cognee user):
-- Any write-back actions the agent takes (post, draft, open issue):
+- Any write-back actions the agent takes (post, draft, open issue, push
+  branch/commit, open PR):
 - Code entry point:
 
 ### Remember — Cognee
@@ -42,6 +43,7 @@ workflow it solves, and who the users are.
 ### Act + Evaluate — your agent(s) + Respan
 
 - Agent(s) and the task each performs:
+- LLM calls routed through the Respan gateway? (models used):
 - How the runs are traced (Respan SDK decorator / instrumentor):
 - Scenario file / Respan testset (path, number of scenarios):
 - Evaluator (LLM judge + model, Python check, human review):
@@ -121,11 +123,12 @@ Commands to reproduce your demo and your eval:
 Environment variables required:
 
 ```text
-LLM_API_KEY                   # provided at kickoff
+RESPAN_API_KEY                # Respan gateway credits, provided at kickoff
+LLM_PROVIDER / LLM_ENDPOINT / LLM_API_KEY / LLM_MODEL      # cognee -> Respan gateway
+EMBEDDING_PROVIDER / EMBEDDING_ENDPOINT / EMBEDDING_API_KEY / EMBEDDING_MODEL / EMBEDDING_DIMENSIONS
 SCALEKIT_ENVIRONMENT_URL
 SCALEKIT_CLIENT_ID
 SCALEKIT_CLIENT_SECRET
-RESPAN_API_KEY
 # add anything else your brain needs
 ```
 
