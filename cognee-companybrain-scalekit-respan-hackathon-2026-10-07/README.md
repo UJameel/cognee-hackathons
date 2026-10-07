@@ -121,6 +121,29 @@ All times **Pacific Time (PT)**. Final timings are confirmed at kickoff.
 | 7:00 PM | Awards |
 | 7:30 PM | Event wrap-up & doors close |
 
+## Reference App — Scalekit + Cognee, end to end
+
+Want to see the Access and Memory layers wired together before you write a
+line? Scalekit's
+[`cognee-scalekit-example`](https://github.com/scalekit-developers/cognee-scalekit-example)
+is a small local web app (a comic-book shop's "Book Issue Desk", two
+customers) that does exactly what steps 3–5 below describe:
+
+- each customer's notes land in **their own Cognee dataset**, and questions
+  are answered only from that dataset — the per-user isolation this
+  hackathon asks for;
+- customers **sign in through Scalekit**, which tells the app who is at the
+  browser and can **post to Slack on their behalf** — the Slack token never
+  reaches the app or Cognee;
+- it works against **local Cognee or Cognee Cloud** unchanged;
+- it indexes **its own source code** into Cognee's code graph and answers
+  structural questions with no LLM call.
+
+It ships with a kickoff skill for coding agents
+(`.agents/skills/cognee-hackathon-kickoff/SKILL.md`) that is the 15-minute
+version of its README plus project ideas. Fork it as a starting point, or
+read it as the reference for how the pieces fit.
+
 ## Setup
 
 > **Bring a laptop and a GitHub account.** LLM access is **provided at
@@ -138,6 +161,33 @@ All times **Pacific Time (PT)**. Final timings are confirmed at kickoff.
 - A Respan API key with event credits — **provided by us at kickoff** (or
   bring your own LLM key from any
   [supported provider](https://docs.cognee.ai/setup-configuration/llm-providers))
+
+### 0. Let your coding agent keep cognee feedback for us
+
+Please use the **`cognee-hackathon-feedback`** skill during the hack. Your
+agent (Claude Code, Codex, Cursor, …) keeps a private record of how cognee
+behaved for you — errors, slow steps, confusion, workarounds, and how
+frustrating each was — in `./cognee-feedback.md`. It records sentiment, never
+quotes; no keys, `.env`, data, or names ever go in the file, and the agent
+never sends or commits it. It is the single most useful thing you can hand us
+after the event.
+
+- **Building inside this folder?** It is already installed: `.claude/skills/`,
+  `.agents/skills/`, the checkpoint hook in `.claude/settings.json` /
+  `.codex/hooks.json`, and the standing instruction in `AGENTS.md` /
+  `CLAUDE.md`. Codex asks you to trust the project once — say yes so the
+  checkpoint runs.
+- **Bringing your own repo?** One command, from its root:
+  ```bash
+  curl -fsSL https://raw.githubusercontent.com/topoteretes/cognee-hackathons/main/agent-skills/cognee-hackathon-feedback/install.sh \
+    | sh -s -- --event "Build a Company Brain — SF Tech Week 2026-10-07"
+  ```
+- **Before you submit:** run `/cognee-hackathon-feedback` in your agent so
+  it writes the wrap-up, then attach `cognee-feedback.md` where the
+  submission form says (see [`templates/SUBMISSION.md`](./templates/SUBMISSION.md)).
+
+How it works and what it does not do:
+[`agent-skills/README.md`](../agent-skills/README.md).
 
 ### 1. Install
 
@@ -388,9 +438,12 @@ print(await cognee.recall("launch date?", dataset_ids=[d.id for d in readable], 
 ```
 
 With access control on, every user+dataset gets its own isolated graph and
-vector store (default Ladybug + LanceDB). A full worked example — two users,
-isolation, then a grant — is in the previous hackathon's
-[`multiuser.py`](../cognee-gtm-brain-hackathon-2026-06-26/src/gtm_brain/multiuser.py).
+vector store (default Ladybug + LanceDB). Two worked examples: Scalekit's
+[`cognee-scalekit-example`](https://github.com/scalekit-developers/cognee-scalekit-example)
+(Scalekit login decides the user, one Cognee dataset per customer, Slack
+post-back as that user) and the previous hackathon's
+[`multiuser.py`](../cognee-gtm-brain-hackathon-2026-06-26/src/gtm_brain/multiuser.py)
+(two users, isolation, then a grant).
 
 ### 6. Respan — gateway credits, traces, evals
 
@@ -465,7 +518,8 @@ or hand the link to an organizer before the deadline.
 
 ## Resources
 
-- Scalekit: [AgentKit overview](https://docs.scalekit.com/agentkit/overview/) ·
+- Scalekit: [`cognee-scalekit-example`](https://github.com/scalekit-developers/cognee-scalekit-example) (reference app: Scalekit login + Slack, Cognee memory per user) ·
+  [AgentKit overview](https://docs.scalekit.com/agentkit/overview/) ·
   [Python SDK](https://docs.scalekit.com/agentkit/sdks/python/) ·
   [connectors](https://docs.scalekit.com/agentkit/connectors/) ·
   [meeting-prep agent walkthrough](https://www.scalekit.com/blog/meeting-prep-ai-agent-development)
